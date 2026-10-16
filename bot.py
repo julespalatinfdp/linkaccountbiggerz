@@ -161,41 +161,54 @@ class LinkView(discord.ui.View):
 
 
 def panels():
+    banner_url = (
+        "https://cdn.discordapp.com/attachments/"
+        "1559585707742208090/1560563024409001994/"
+        "visual-4dc51277-1a49-43ba-865e-10550f51fcc4.png"
+        "?ex=6ad3d3d2&is=6ad28252"
+        "&hm=a251fda6b5e6dcf0936a21527dae921fd57b4aaca095baff47bd4fda9ad3714e"
+    )
+
     welcome = discord.Embed(
         title="Welcome to the BiggerZ server!",
         description=(
-            "BiggerZ is your home for **Casino**, **Sportsbook** and "
-            "**Prediction Markets**\n\n"
+            "BiggerZ is your home for **Casino**, **Sportsbook** "
+            "and **Prediction Markets**\n\n"
             "**Join thousands of players, share your biggest wins, "
             "discuss betting strategies, discover new opportunities, "
             "and participate in exclusive community rewards.**"
         ),
-        color=0x7856FF,
+        color=0xF5C451,
     )
 
     welcome.add_field(
         name="Your BiggerZ account",
         value=(
-            "You can register your account’s email address using the form below. "
-            "This is VERY IMPORTANT because it allows you to win exclusive "
-            "community gifts, complete all "
-            "[quests](https://discord.com/channels/"
-            "1517592147467960393/1559585588896600125) "
-            "and access VIP channels if you’re eligible."
+            "You can register your account’s email address using "
+            "the form below.\n\n"
+            "This is **VERY IMPORTANT** because it allows you to:\n\n"
+            "• Win **exclusive community gifts**\n"
+            "• Complete all "
+            "[**quests**](https://discord.com/channels/"
+            "1517592147467960393/1559585588896600125)\n"
+            "• Access **VIP channels** if you’re eligible."
         ),
         inline=False,
     )
 
+    welcome.set_image(url=banner_url)
+
     link = discord.Embed(
         title="Add your BiggerZ account",
         description=(
-            "Link your Discord account to the email address you use on BiggerZ."
-            "\n\n"
-            "Click “Add / update my account”.\n"
-            "Enter your BiggerZ email address in the private form.\n"
-            "Your association is saved."
+            "Link your Discord account to the email address "
+            "you use on BiggerZ.\n\n"
+            "**1️⃣  Click “Add / update my account”.**\n\n"
+            "**2️⃣  Enter your BiggerZ email address "
+            "in the private form.**\n\n"
+            "**3️⃣  Your association is saved.**"
         ),
-        color=0x7856FF,
+        color=0xF5C451,
     )
 
     return [welcome, link]
