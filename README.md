@@ -1,100 +1,108 @@
-# Bot Discord BiggerZ — GitHub + Railway
+# BiggerZ — liaison Discord via l’API partenaire
 
-Un message d’accueil et un panneau d’association inspirés des captures fournies, en français. Les boutons restent utilisables après un redémarrage du bot.
+Version staging utilisant la documentation BiggerZ Discord v1 fournie le 20 octobre 2026. Aucun e-mail, mot de passe ou code de connexion n’est demandé au membre. Le membre confirme sur BiggerZ après connexion à son compte.
 
-**Périmètre : association déclarative Discord ↔ e-mail.** Ce projet ne se connecte pas au système de comptes BiggerZ et ne vérifie pas que l’adresse appartient au membre ou à un compte BiggerZ. Aucune attribution de récompense, aucun paiement et aucun rôle « vérifié » ne sont automatisés. Une véritable liaison nécessite une API ou un OAuth officiel fourni par BiggerZ. Un code envoyé par e-mail vérifierait la boîte mail, pas à lui seul le compte BiggerZ.
+## Mettre à jour GitHub
 
-## 1. Créer l’application Discord
+Dépose le contenu de ce dossier à la racine du dépôt du bot de liaison (pas celui des annonces de gains).
 
-1. Ouvre https://discord.com/developers/applications et crée une application appelée **BiggerZ** (avec l’accord du client pour son identité visuelle).
-2. Dans **Bot**, crée/récupère le bot, puis copie son token avec **Reset Token** si nécessaire. Ce token va uniquement dans Railway, jamais dans GitHub ou un message Discord.
-3. Les options privilégiées **Message Content**, **Server Members** et **Presence** ne sont pas nécessaires : laisse-les désactivées.
-4. Dans **OAuth2 → URL Generator**, sélectionne `bot` et `applications.commands`. Accorde au bot **View Channels**, **Send Messages** et **Embed Links**. Ouvre l’URL et ajoute le bot au serveur. Il n’a pas besoin de la permission Administrateur.
-5. Dans Discord, active **Paramètres utilisateur → Avancés → Mode développeur**. Clic droit sur le serveur → **Copier l’identifiant du serveur**. Fais de même sur les salons de règlement et de guide si tu souhaites les afficher.
-6. Laisse **Interactions Endpoint URL** vide : ce bot reçoit les interactions via la connexion Gateway.
+Remplace entièrement :
+- `bot.py`
+- `storage.py`
+- `requirements.txt`
+- `Dockerfile`
+- `railway.toml`
 
-## 2. Mettre le code sur GitHub
+Ajoute `biggerz.py`. Le Dockerfile doit copier les trois fichiers Python. Remplace également les anciens tests par le dossier `tests` fourni. Les fichiers cachés sont visibles sur Mac avec Cmd + Maj + point.
 
-Décompresse l’archive. Crée un dépôt GitHub, puis utilise **Add file → Upload files** pour y déposer le CONTENU du dossier `biggerz-discord-bot` et valider le commit.
-
-`Dockerfile`, `bot.py`, `storage.py`, `requirements.txt` et `railway.toml` doivent être à la racine du dépôt. Ajoute aussi le guide, les tests et les fichiers cachés `.gitignore`, `.dockerignore`, `.env.example` (via Git si ton sélecteur les masque). Ne mets aucun vrai token ni base de données dans le dépôt.
-
-## 3. Déployer sur Railway
-
-1. **New Project → Deploy from GitHub repo**, sélectionne ce dépôt. Railway utilise le `Dockerfile` et lance `python bot.py`.
-2. Dans le service du bot, ajoute les variables ci-dessous. Un premier déploiement sans variables peut échouer : redéploie après configuration.
-3. Ajoute un **Volume** au service et choisis exactement **`/data`** comme chemin de montage. Il conserve la base SQLite lors des redéploiements. Sans ce volume, les associations peuvent disparaître.
-4. Garde **une seule instance/réplique**. Désactive le mode de mise en veille / Serverless s’il est proposé : le bot doit conserver sa connexion Discord en continu. Aucun domaine public, port HTTP ni healthcheck HTTP n’est nécessaire.
-5. Déploie. Les logs doivent afficher **Bot connecté ; panneaux disponibles avec /installer.**
-6. Dans le salon d’accueil de Discord, un administrateur du serveur exécute **`/installer`**. Le bot publie un seul message contenant les deux panneaux et les trois boutons. Épingle-le si souhaité.
-
-Chaque appel à `/installer` publie un nouveau message. Supprime l’ancien message si tu remplaces le panneau. Les panneaux ne sont pas renvoyés à chaque redémarrage et aucun message privé automatique n’est envoyé aux nouveaux membres.
+Les fichiers `.env.example`, `.gitignore`, `.dockerignore` et ce guide ne contiennent aucun secret réel.
 
 ## Variables Railway
 
-| Variable | Valeur / rôle | Obligatoire |
-|---|---|---|
-| `DISCORD_TOKEN` | Token du bot depuis le Developer Portal | Oui |
-| `DISCORD_GUILD_ID` | Identifiant numérique de ton serveur Discord | Oui |
-| `DATABASE_PATH` | `/data/biggerz.sqlite3` | À définir ainsi avec le volume `/data` |
-| `RULES_CHANNEL_ID` | Identifiant du salon règlement | Non |
-| `GUIDE_CHANNEL_ID` | Identifiant du salon guide | Non |
-| `LOGO_URL` | URL HTTPS publique directe vers le logo autorisé par BiggerZ | Non |
-| `BANNER_URL` | URL HTTPS publique directe vers la bannière | Non |
-| `SERVER_DESCRIPTION` | Description de ton serveur, au maximum 2 500 caractères | Non |
+Conserve le token du bot et l’identifiant de ton serveur. Ajoute ou modifie :
 
-Le fichier `.env.example` contient le modèle à recopier dans les variables Railway. Les valeurs `COLLER_...` doivent être remplacées. Aucun fichier `.env` n’est lu automatiquement par Python. Railway injecte directement les variables.
+```env
+DISCORD_TOKEN=TON_TOKEN_DISCORD_EXISTANT
+DISCORD_GUILD_ID=ID_DE_TON_SERVEUR
+BIGGERZ_API_BASE_URL=https://v2biggerz.live/nitro/integrations/discord/v1
+BIGGERZ_API_KEY=LA_CLE_STAGING_FOURNIE_PAR_LE_DEV
+DATABASE_PATH=/data/biggerz-staging.sqlite3
+```
 
-Description par défaut :
-> Le serveur de la communauté BiggerZ : échange avec les membres, retrouve les annonces et découvre les informations utiles.
+La clé API doit être saisie exactement telle que fournie par le développeur. Elle n’est pas incluse dans le projet. Le fichier `.env.example` est un modèle ; le bot lit les variables injectées par Railway, pas un fichier `.env`.
 
-Pour changer les textes détaillés, édite la fonction `panels()` de `bot.py`, puis redéploie et remplace le panneau avec `/installer`. Le logo et la bannière sont facultatifs ; aucune image Betclic n’est réutilisée.
+Conserve le volume Railway monté sur `/data` et une seule réplique. Le bot doit tourner en continu : pas de mise en veille. Aucun domaine public, port HTTP ou webhook n’est nécessaire.
 
-## Fonctionnement pour les membres
+La bannière Discord précédemment fournie reste la valeur par défaut. Si elle n’apparaît plus, définis `BANNER_URL` avec une URL HTTPS publique d’image à jour, idéalement stable. Une valeur vide masque l’image. Les anciennes variables de description et de salons ne sont pas utilisées : le texte du panneau est dans `panels()`.
 
-- **Ajouter / modifier mon compte** ouvre un formulaire Discord privé. L’adresse est validée syntaxiquement puis remplace la précédente pour ce membre.
-- **Voir mon e-mail** affiche uniquement au membre son adresse et le statut « non vérifié ».
-- **Supprimer mon association** efface immédiatement sa ligne dans la base active.
-- **`/compte membre:@membre`** permet uniquement aux administrateurs de consulter, dans une réponse privée, l’adresse déclarée par un membre. Les contrôles d’autorisation sont aussi exécutés côté bot.
+## Publier le nouveau panneau
 
-Plusieurs membres peuvent déclarer la même adresse : aucune preuve de propriété n’est collectée. Ne traite donc pas ces déclarations comme des identités vérifiées ou une preuve d’éligibilité.
+1. Attends la réussite du déploiement et la connexion du bot.
+2. Supprime l’ancien panneau Discord qui parle d’e-mail.
+3. Lance `/installer` dans le salon souhaité avec un administrateur.
+4. Épingle le nouveau message.
 
-## Données et exploitation
+Les boutons de l’ancien panneau restent reconnus par la nouvelle version, mais leurs anciens libellés ne se mettent pas à jour automatiquement. `/installer` publie un nouveau message à chaque appel.
 
-La base enregistre uniquement l’identifiant du serveur, l’identifiant Discord du membre, son adresse et la date de dernière modification UTC. Les e-mails ne sont pas envoyés à BiggerZ, ne sont pas publiés dans un salon et ne sont pas inscrits volontairement dans les logs du bot. Ils sont accessibles aux administrateurs via `/compte`, aux personnes qui ont accès au volume Railway et aux systèmes de Discord qui traitent le formulaire.
+Le bot nécessite seulement View Channels, Send Messages et Embed Links dans le salon. L’invitation utilise les scopes `bot` et `applications.commands`. Aucun intent privilégié ni permission Administrateur du bot n’est nécessaire.
 
-SQLite n’est pas chiffré par l’application. Restreins l’accès au projet Railway. Les données restent conservées jusqu’à suppression par le membre ou intervention de l’exploitant ; quitter le serveur ne les supprime pas automatiquement. La suppression vise la base active, pas d’éventuelles sauvegardes externes. Définis avec le client la durée de conservation et la politique des sauvegardes avant la mise en service, et adapte le paragraphe « Tes données » dans `panels()` si besoin.
+## Parcours membre
 
-Le bot est conçu pour un seul serveur. Pour plusieurs clients, déploie un service, un volume et une application Discord distincts par client.
+- **Link / update my account** ou `/link` : génération d’un lien privé à usage unique, valable 15 minutes.
+- Le membre ouvre le bouton privé, se connecte sur le staging et clique sur Confirm.
+- Le bot vérifie la demande environ toutes les quatre secondes à faible charge. Il ralentit naturellement quand plusieurs demandes partagent la limite API.
+- La réponse privée initiale est remplacée par une confirmation si le bot est resté actif et que le message Discord peut encore être modifié.
+- **View my account** ou `/account` : lecture du lien actuel directement depuis l’API BiggerZ.
+- **Unlink my account** ou `/unlink` : confirmation privée, puis suppression via l’API.
+- `/compte membre:@membre` : consultation privée réservée aux administrateurs.
 
-## Vérification après déploiement
+Un clic répété pendant une demande en attente ne crée pas un nouveau lien. Si le membre perd son message privé après un redémarrage, il peut vérifier son compte avec `/account` ou attendre l’expiration pour générer un nouveau lien. Les URL privées ne sont pas stockées en base.
 
-1. Utilise `/installer` avec un administrateur ; avec un compte non administrateur, les commandes d’administration doivent être refusées ou invisibles.
-2. Saisis une adresse de test : vérifie que la confirmation et la consultation sont privées.
-3. Modifie-la ; redémarre Railway ; vérifie que les boutons fonctionnent encore et que l’adresse modifiée est conservée.
-4. Supprime l’association et vérifie avec « Voir mon e-mail » et `/compte` qu’elle a disparu.
+Si une demande est encore en attente, il faut l’annuler sur BiggerZ ou attendre son expiration avant de supprimer une association existante. La documentation ne fournit pas d’endpoint pour annuler une demande en attente depuis le bot.
 
-Tests automatisés locaux (Python 3.9+ ; production Docker : Python 3.12) :
+## Synchronisation et stockage
+
+Les changements faits côté BiggerZ sont récupérés toutes les 60 secondes. Les pages pleines sont parcourues immédiatement, avec respect du limiteur global. Le bot applique les événements et sauvegarde le curseur dans la même transaction SQLite. Toute suppression utilise les deux identifiants, quel que soit le motif. Les événements inconnus ne bloquent pas la synchronisation.
+
+Le cache local est alimenté uniquement par les événements dans l’ordre du serveur. Les consultations membres passent par l’API pour obtenir le lien actuel. La clé API et les URL privées ne sont pas stockées dans SQLite ni volontairement journalisées.
+
+La base conserve : les paires d’identifiants vérifiées, le curseur d’événements, les identifiants de demandes en attente et leur expiration, ainsi que l’environnement API. Les identifiants échangés avec BiggerZ restent des chaînes de caractères.
+
+La nouvelle base staging est distincte de l’ancienne base d’e-mails. Les anciennes associations déclaratives ne deviennent jamais vérifiées automatiquement. Ce déploiement n’efface pas l’ancienne base ni ses sauvegardes : l’exploitant doit gérer leur conservation ou suppression séparément.
+
+Le code respecte un rythme global inférieur à 100 appels/minute (limite documentée : 120), attend Retry-After après un 429 et utilise un délai croissant lors des nouvelles tentatives après les erreurs réseau ou 5xx. Les requêtes ont un délai maximal de 20 secondes et quatre tentatives au plus par opération. Les tâches de fond réessaient au cycle suivant. Pour un grand nombre de confirmations simultanées, envisager les webhooks avec BiggerZ.
+
+Les accès VIP, cadeaux et quêtes mentionnés dans le panneau ne sont pas attribués par ce code : l’intégration actuelle porte uniquement sur la liaison des comptes.
+
+## Test réel sur staging
+
+1. Clique sur Link / update my account depuis TON compte Discord.
+2. Vérifie que seul ton compte Discord voit le bouton privé.
+3. Ouvre le lien et connecte-toi avec le compte BiggerZ autorisé, puis confirme.
+4. Utilise `/account` : il doit afficher l’identifiant BiggerZ.
+5. Redémarre le service Railway et vérifie de nouveau `/account`.
+6. Utilise `/unlink`, confirme, puis vérifie l’absence de liaison avec `/account`.
+7. Relie de nouveau le compte, puis délie-le depuis BiggerZ. Vérifie `/account` et laisse un cycle de 60 secondes pour synchroniser le cache.
+8. Teste également l’annulation et l’expiration d’une demande.
+
+Ne partage pas le lien privé : toute personne qui l’ouvre en étant connectée peut associer SON compte BiggerZ à l’identifiant Discord concerné.
+
+## Production
+
+Après validation par le développeur, utiliser la clé de production et :
+
+```env
+BIGGERZ_API_BASE_URL=https://www.biggerz.com/nitro/integrations/discord/v1
+DATABASE_PATH=/data/biggerz-production.sqlite3
+```
+
+Ne réutilise pas la base staging en production : les curseurs et les comptes appartiennent à des environnements distincts. Le bot refuse un changement d’environnement sur une base déjà initialisée.
+
+## Tests automatisés
 
 ```sh
 python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
 ```
 
-Ces tests ne se connectent pas à Discord. Une validation réelle nécessite ton token, ton serveur et ton déploiement Railway.
-
-## Dépannage
-
-- **Token invalide** : récupère un nouveau token dans Discord, mets à jour `DISCORD_TOKEN`, redéploie.
-- **Commande absente** : vérifie `DISCORD_GUILD_ID`, l’invitation avec `applications.commands` et les logs. Recharge Discord.
-- **Panneau impossible à publier** : vérifie les permissions du bot dans le salon, y compris ses restrictions locales.
-- **Données perdues après déploiement** : vérifie le montage du volume sur `/data` et `DATABASE_PATH`.
-- **Bouton sans réponse** : vérifie que Railway est actif et que le bot apparaît connecté ; un formulaire déjà ouvert avant un redémarrage doit être rouvert.
-
-## Sources techniques
-
-- Discord : https://docs.discord.com/developers/interactions/receiving-and-responding
-- discord.py (interactions) : https://discordpy.readthedocs.io/en/stable/interactions/api.html
-- Vues persistantes : https://github.com/Rapptz/discord.py/blob/master/examples/views/persistent.py
-- Railway (volumes) : https://docs.railway.com/volumes
-- Site BiggerZ consulté pour le contexte : https://www.biggerz.com/
+17 tests exécutés avec succès localement. Ils couvrent notamment les réponses privées, les demandes expirées, la reprise du stockage, la pagination, la suppression ciblée, les réponses 429 et les droits administrateur déclarés. Les appels API et Discord sont simulés : aucun test connecté à votre compte BiggerZ ou au serveur Discord n’a été effectué.
